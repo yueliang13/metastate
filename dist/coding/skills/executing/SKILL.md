@@ -116,6 +116,7 @@ digraph executing_flow {
   "dispatch implementer" [shape=box]
   "read EXPECTED Status" [shape=box]
   "UNEXPECTED?" [shape=diamond]
+  "read Complexity" [shape=box]
 
   "dispatch spec-reviewer" [shape=box]
 
@@ -131,7 +132,10 @@ digraph executing_flow {
   "dispatch implementer" -> "read EXPECTED Status" [label="read status from working/plan/task-{id}/test-results.md (line 4 only)"]
   "read EXPECTED Status" -> "UNEXPECTED?"
   "UNEXPECTED?" -> "dispatch implementer" [label="yes: FIX and SPEC/CODE REVIEW again"]
-  "UNEXPECTED?" -> "dispatch spec-reviewer" [label="no: EXPECTED"]
+  "UNEXPECTED?" -> "read Complexity" [label="no: EXPECTED"]
+  "read Complexity" -> "dispatch spec-reviewer" [label="full"]
+  "read Complexity" -> "dispatch spec-reviewer" [label="standard"]
+  "read Complexity" -> "next task" [label="minimal: skip review"]
 
   "dispatch spec-reviewer" -> "dispatch code-reviewer"
 
@@ -142,6 +146,22 @@ digraph executing_flow {
   "next task" -> "dispatch implementer" [label="Task {{id}} → Task {{id}}+1"]
 }
 ```
+
+### Complexity-Based Review Dispatch
+
+After implementer completes and status is `EXPECTED`, read the `Complexity` field from the task file:
+
+
+
+- **minimal**: skip review, go directly to next task
+
+- **standard**: dispatch `spec-reviewer`
+
+- **full**: dispatch `spec-reviewer` → `code-reviewer`
+
+
+
+If task file has no `Complexity` field, default to **full**.
 
 After all tasks:
 1. read all `working/plan/task-{id}/changes.md` (from each task directory)
@@ -155,7 +175,7 @@ After all tasks:
 **NEVER:**
 - Skip any step of process flow
 - Combine steps of process flow
-- Reorder steps of process flow (implementer → spec-reviewer → code-reviewer, always)
+- Reorder steps of process flow (reviewer order by complexity level must be followed)
 - Combine tasks into one dispatch
 - Stop iterating because "taking too long"
 - Decide issue "not worth fixing" - implementer's job

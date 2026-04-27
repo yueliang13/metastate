@@ -65,6 +65,12 @@ Output files:
 
 This is Task N of M.
 
+## Complexity: minimal | standard | full
+
+- **minimal**: One-liner fixes, typo corrections, config changes. No logic change.
+- **standard**: Single method/class changes, simple feature additions. Localized scope.
+- **full**: Multi-file changes, new modules, architectural impact, security-sensitive code.
+
 ---
 
 **Files:**
@@ -133,6 +139,20 @@ self-contained changes that make sense independently.**
       - If spec problem (cannot be fixed in plan): set `Don't Fix`, fill `Decision Reason` only, no extra contents
 
 **NEVER add explanations/interpretations/summaries when responding — per `Response Format` only**
+
+## Complexity Judgment
+
+When writing each task, you MUST set the `## Complexity` field based on:
+
+- **minimal**: Changes ≤ 3 lines. No new logic, no new tests needed (existing tests cover it).
+  Examples: fix a typo, change a constant, rename a variable, add a log line.
+- **standard**: Changes in 1 file or 2 closely coupled files. New logic but isolated.
+  Examples: add a method to existing class, fix a bug with clear cause, add a CLI flag.
+- **full**: Changes across 3+ files, or new files/modules, or touches security/auth/error-handling,
+  or modifies shared interfaces that other code depends on.
+  Examples: add a new API endpoint, refactor a module boundary, change a database schema.
+
+When in doubt, choose the **higher** level. Over-reviewing is cheap; under-reviewing is expensive.
 
 ## Bite-Sized Task Granularity
 

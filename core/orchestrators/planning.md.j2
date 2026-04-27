@@ -34,6 +34,18 @@ Use EXACT format only. **Do not add any extra content.**
 - Review results path: {{ domain.files.plan_review }}
 ```
 
+## Spec Complexity
+
+Read the first line of the spec file. If it contains `Complexity: minimal`, the spec is minimal. If it contains `Complexity: standard`, the spec is standard. Otherwise, default to **full**.
+
+{% if domain.agents.spec_review_levels is defined %}
+{% for level, reviewers in domain.agents.spec_review_levels.items() %}
+- **{{ level }}**: {% if reviewers %}plan review by {% for r in reviewers %}`{{ r }}`{% if not loop.last %}, {% endif %}{% endfor %}{% else %}skip plan review entirely{% endif %}
+{% endfor %}
+{% else %}
+- **full**: plan review by all plan reviewers (default)
+{% endif %}
+
 ## Process Flow
 
 **On every state transition: MUST emit the following declaration VERBATIM:**
@@ -42,6 +54,7 @@ Use EXACT format only. **Do not add any extra content.**
 ```dot
 digraph planning_flow {
   "check spec exists" [shape=box]
+  "read spec complexity" [shape=box]
   "wait user confirm" [shape=box]
   "dispatch {{ domain.agents.planner }}" [shape=box]
 {% for reviewer in domain.agents.plan_reviewers %}
@@ -51,11 +64,15 @@ digraph planning_flow {
   "has Pending issues?" [shape=diamond]
   "complete" [shape=doublecircle]
 
-  "check spec exists" -> "wait user confirm"
+  "check spec exists" -> "read spec complexity"
+  "read spec complexity" -> "wait user confirm"
   "wait user confirm" -> "dispatch {{ domain.agents.planner }}" [label="begin"]
+{% if domain.agents.spec_review_levels is defined and domain.agents.spec_review_levels.get('minimal') == [] %}
+  "dispatch {{ domain.agents.planner }}" -> "complete" [label="minimal: skip plan review"]
+{% endif %}
 {% set ns = namespace(prev=domain.agents.planner) %}
 {% for reviewer in domain.agents.plan_reviewers %}
-  "dispatch {{ ns.prev }}" -> "dispatch {{ reviewer }}"
+  "dispatch {{ ns.prev }}" -> "dispatch {{ reviewer }}" [label="standard/full"]
 {% set ns.prev = reviewer %}
 {% endfor %}
   "dispatch {{ ns.prev }}" -> "read review issues" [label="collect all review issues from {{ domain.files.plan_review }}"]
@@ -65,12 +82,25 @@ digraph planning_flow {
 }
 ```
 
+### Complexity-Based Plan Review Dispatch
+
+After planner completes:
+{% if domain.agents.spec_review_levels is defined %}
+{% for level, reviewers in domain.agents.spec_review_levels.items() %}
+- **{{ level }}** spec: {% if reviewers %}dispatch {% for r in reviewers %}`{{ r }}`{% if not loop.last %} → {% endif %}{% endfor %}{% else %}skip plan review, go directly to complete{% endif %}
+{% endfor %}
+{% else %}
+- **full** spec: dispatch all plan reviewers (default)
+{% endif %}
+
+If spec file has no `Complexity` field, default to **full**.
+
 After completion: output the dispatch count, tokens and duration for each agent.
 
 **NEVER:**
 - Skip any step of process flow
 - Combine steps of process flow
-- Reorder steps of process flow (Plan -> Plan review, always)
+- Reorder steps of process flow
 - Stop iterating because "taking too long"
 - Decide plan is "good enough" yourself
 - Fix, verify or review the plan yourself - dispatch the corresponding agent

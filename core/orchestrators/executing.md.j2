@@ -116,6 +116,7 @@ digraph executing_flow {
   "dispatch {{ domain.agents.implementer }}" [shape=box]
   "read {{ domain.conditions.accept }} Status" [shape=box]
   "{{ domain.conditions.reject }}?" [shape=diamond]
+  "read Complexity" [shape=box]
 {% for reviewer in domain.agents.reviewers %}
   "dispatch {{ reviewer }}" [shape=box]
 {% endfor %}
@@ -129,7 +130,10 @@ digraph executing_flow {
   "dispatch {{ domain.agents.implementer }}" -> "read {{ domain.conditions.accept }} Status" [label="read status from {{ domain.files.status }} (line 4 only)"]
   "read {{ domain.conditions.accept }} Status" -> "{{ domain.conditions.reject }}?"
   "{{ domain.conditions.reject }}?" -> "dispatch {{ domain.agents.implementer }}" [label="yes: {{ domain.conditions.rework_label }}"]
-  "{{ domain.conditions.reject }}?" -> "dispatch {{ domain.agents.reviewers[0] }}" [label="no: {{ domain.conditions.accept }}"]
+  "{{ domain.conditions.reject }}?" -> "read Complexity" [label="no: {{ domain.conditions.accept }}"]
+  "read Complexity" -> "dispatch {{ domain.agents.reviewers[0] }}" [label="full"]
+  "read Complexity" -> "dispatch {{ domain.agents.reviewers[0] }}" [label="standard"]
+  "read Complexity" -> "next task" [label="minimal: skip review"]
 {% for i in range(domain.agents.reviewers | length - 1) %}
   "dispatch {{ domain.agents.reviewers[i] }}" -> "dispatch {{ domain.agents.reviewers[i + 1] }}"
 {% endfor %}
@@ -140,6 +144,20 @@ digraph executing_flow {
   "next task" -> "dispatch {{ domain.agents.implementer }}" [label="Task {% raw %}{{id}}{% endraw %} → Task {% raw %}{{id}}{% endraw %}+1"]
 }
 ```
+
+### Complexity-Based Review Dispatch
+
+After implementer completes and status is `{{ domain.conditions.accept }}`, read the `Complexity` field from the task file:
+
+{% if domain.agents.review_levels is defined %}
+{% for level, reviewers in domain.agents.review_levels.items() %}
+- **{{ level }}**: {% if reviewers %}dispatch {% for r in reviewers %}`{{ r }}`{% if not loop.last %} → {% endif %}{% endfor %}{% else %}skip review, go directly to next task{% endif %}
+{% endfor %}
+{% else %}
+- **full**: dispatch all reviewers (default)
+{% endif %}
+
+If task file has no `Complexity` field, default to **full**.
 
 After all tasks:
 1. read all `{{ domain.files.output }}` (from each task directory)
@@ -153,7 +171,7 @@ After all tasks:
 **NEVER:**
 - Skip any step of process flow
 - Combine steps of process flow
-- Reorder steps of process flow ({{ domain.agents.implementer }} → {% for r in domain.agents.reviewers %}{{ r }}{% if not loop.last %} → {% endif %}{% endfor %}, always)
+- Reorder steps of process flow (reviewer order by complexity level must be followed)
 - Combine tasks into one dispatch
 - Stop iterating because "taking too long"
 - Decide issue "not worth fixing" - {{ domain.agents.implementer }}'s job

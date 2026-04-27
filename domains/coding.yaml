@@ -7,6 +7,16 @@ agents:
   implementer: implementer
   reviewers: [spec-reviewer, code-reviewer]
 
+  review_levels:
+    minimal: []
+    standard: [spec-reviewer]
+    full: [spec-reviewer, code-reviewer]
+
+  spec_review_levels:
+    minimal: []                    # trivial change: skip plan review
+    standard: [plan-reviewer]       # normal change: plan review
+    full: [plan-reviewer]           # complex change: plan review (same, but planner reads more context)
+
   agent_descriptions:
     planner: "Creates implementation plans from specs. Plans must be executable by someone with zero context. Bite-sized tasks with TDD steps."
     implementer: "Implements a single task using TDD. Fixes review issues. Exhausts all options before Don't Fix."

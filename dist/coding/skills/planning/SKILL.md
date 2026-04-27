@@ -34,6 +34,20 @@ Use EXACT format only. **Do not add any extra content.**
 - Review results path: working/plan-review-results.md
 ```
 
+## Spec Complexity
+
+Read the first line of the spec file. If it contains `Complexity: minimal`, the spec is minimal. If it contains `Complexity: standard`, the spec is standard. Otherwise, default to **full**.
+
+
+
+- **minimal**: skip plan review entirely
+
+- **standard**: plan review by `plan-reviewer`
+
+- **full**: plan review by `plan-reviewer`
+
+
+
 ## Process Flow
 
 **On every state transition: MUST emit the following declaration VERBATIM:**
@@ -42,6 +56,7 @@ Use EXACT format only. **Do not add any extra content.**
 ```dot
 digraph planning_flow {
   "check spec exists" [shape=box]
+  "read spec complexity" [shape=box]
   "wait user confirm" [shape=box]
   "dispatch planner" [shape=box]
 
@@ -51,11 +66,15 @@ digraph planning_flow {
   "has Pending issues?" [shape=diamond]
   "complete" [shape=doublecircle]
 
-  "check spec exists" -> "wait user confirm"
+  "check spec exists" -> "read spec complexity"
+  "read spec complexity" -> "wait user confirm"
   "wait user confirm" -> "dispatch planner" [label="begin"]
 
+  "dispatch planner" -> "complete" [label="minimal: skip plan review"]
 
-  "dispatch planner" -> "dispatch plan-reviewer"
+
+
+  "dispatch planner" -> "dispatch plan-reviewer" [label="standard/full"]
 
 
   "dispatch plan-reviewer" -> "read review issues" [label="collect all review issues from working/plan-review-results.md"]
@@ -65,12 +84,27 @@ digraph planning_flow {
 }
 ```
 
+### Complexity-Based Plan Review Dispatch
+
+After planner completes:
+
+
+- **minimal** spec: skip plan review, go directly to complete
+
+- **standard** spec: dispatch `plan-reviewer`
+
+- **full** spec: dispatch `plan-reviewer`
+
+
+
+If spec file has no `Complexity` field, default to **full**.
+
 After completion: output the dispatch count, tokens and duration for each agent.
 
 **NEVER:**
 - Skip any step of process flow
 - Combine steps of process flow
-- Reorder steps of process flow (Plan -> Plan review, always)
+- Reorder steps of process flow
 - Stop iterating because "taking too long"
 - Decide plan is "good enough" yourself
 - Fix, verify or review the plan yourself - dispatch the corresponding agent
