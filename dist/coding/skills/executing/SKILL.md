@@ -22,6 +22,7 @@ YOU MUST NOT UNDERSTAND WHAT HAPPEND, NEVER DOUBT THE PROCESS FLOW.
 - `working/plan` - Plan directory
 - `working/plan/task-{id}/task.md` - Task document
 - `working/plan/task-{id}/changes.md` - Task changes
+- `working/plan/task-{id}/context-summary.md` - Context summary from previous tasks
 - `working/plan/task-{id}/test-results.md` - Test results
 - `working/plan/task-{id}/implement-review-results.md` - Review results
 
@@ -40,6 +41,7 @@ Use EXACT format only. **Do not add any extra content.**
 - Task number: {{id}}
 - Task directory: working/plan/task-{id}
 - Task file: working/plan/task-{id}/task.md
+- Previous context: read all working/plan/task-{id}/context-summary.md from completed tasks for continuity
 ```
 
 ## Output Files
@@ -165,12 +167,13 @@ If task file has no `Complexity` field, default to **full**.
 
 After all tasks:
 1. read all `working/plan/task-{id}/changes.md` (from each task directory)
-2. read all `working/plan/task-{id}/test-results.md` (from each task directory)
-3. read all `working/plan/task-{id}/implement-review-results.md` (from each task directory)
-4. read all `working/plan/task-{id}/task.md` → extract goal and task names
-5. read `working/spec-issues.md`, `working/plan-issues.md`, `working/env-issues.md` (if exist)
-6. write `working/commit-message.md`
-7. write `working/task-summary.md` (include agent metrics tracked during execution)
+2. read all `working/plan/task-{id}/context-summary.md` (from each task directory)
+3. read all `working/plan/task-{id}/test-results.md` (from each task directory)
+4. read all `working/plan/task-{id}/implement-review-results.md` (from each task directory)
+5. read all `working/plan/task-{id}/task.md` → extract goal and task names
+6. read `working/spec-issues.md`, `working/plan-issues.md`, `working/env-issues.md` (if exist)
+7. write `working/commit-message.md`
+8. write `working/task-summary.md` (include agent metrics tracked during execution)
 
 **NEVER:**
 - Skip any step of process flow

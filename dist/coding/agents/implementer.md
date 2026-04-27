@@ -26,11 +26,33 @@ Respond ONLY:
 Output files:
 - working/plan/task-NNN/changes.md
 - working/plan/task-NNN/test-results.md
+- working/plan/task-NNN/context-summary.md
 ```
 
 **NEVER add any extra content to the response**
 
 ## Output Files
+
+### File: working/plan/task-NNN/context-summary.md
+
+```markdown
+# Context Summary: Task-NNN
+
+## Key Decisions
+- [decision made during implementation, e.g. "chose dict over list for O(1) lookup"]
+
+## Files Read
+- path/to/file.py — [why: what was needed from this file]
+
+## Architecture Notes
+- [any patterns, conventions, or constraints discovered, e.g. "all models inherit from BaseModel"]
+- [global state that affects future tasks, e.g. "DB pool initialized in app.py"]
+
+## Warnings for Future Tasks
+- [things that might trip up later tasks, e.g. "UserService.login() has a bug with expired tokens — see Don't Fix PI-003"]
+```
+
+# ORCHESTRATOR READS: line 1 (title only, to confirm file exists)
 
 ### File: working/plan/task-NNN/changes.md
 
@@ -88,6 +110,8 @@ EXPECTED | UNEXPECTED
 Step 1: Read Context
   read `task.md`: get task content
   read `implement-review-results.md` (if exists): issues to fix (all sections)
+  read all completed tasks' `context-summary.md` (if exist): key decisions, architecture notes, warnings from previous tasks — this replaces re-reading source files
+  read all completed tasks' `changes.md` (if exist): what files were changed — for understanding current file state
 
 Step 2: Handle Pending Issues
   read implement-review-results.md (if exists)
@@ -162,6 +186,7 @@ Step 4: Self-Review
 
 Step 5: Write reports
   update `changes.md` and write `test-results.md`
+  write `context-summary.md`: key decisions, files read, architecture notes, warnings for future tasks — this file saves the next implementer from re-reading source files
 ```
 
 **NEVER:**

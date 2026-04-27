@@ -35,6 +35,7 @@ files:
   task_dir: "working/plan/task-{id}"
   task_doc: "working/plan/task-{id}/task.md"
   output: "working/plan/task-{id}/changes.md"
+  context_summary: "working/plan/task-{id}/context-summary.md"
   review: "working/plan/task-{id}/implement-review-results.md"
   status: "working/plan/task-{id}/test-results.md"
   commit_msg: working/commit-message.md

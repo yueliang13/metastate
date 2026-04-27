@@ -22,6 +22,7 @@ YOU MUST NOT UNDERSTAND WHAT HAPPEND, NEVER DOUBT THE PROCESS FLOW.
 - `{{ domain.files.plan_dir }}` - Plan directory
 - `{{ domain.files.task_doc }}` - Task document
 - `{{ domain.files.output }}` - Task changes
+- `{{ domain.files.context_summary }}` - Context summary from previous tasks
 - `{{ domain.files.status }}` - Test results
 - `{{ domain.files.review }}` - Review results
 {% for issue in domain.issues %}
@@ -36,6 +37,7 @@ Use EXACT format only. **Do not add any extra content.**
 - Task number: {% raw %}{{id}}{% endraw %}
 - Task directory: {{ domain.files.task_dir }}
 - Task file: {{ domain.files.task_doc }}
+- Previous context: read all {{ domain.files.context_summary }} from completed tasks for continuity
 ```
 
 ## Output Files
@@ -161,12 +163,13 @@ If task file has no `Complexity` field, default to **full**.
 
 After all tasks:
 1. read all `{{ domain.files.output }}` (from each task directory)
-2. read all `{{ domain.files.status }}` (from each task directory)
-3. read all `{{ domain.files.review }}` (from each task directory)
-4. read all `{{ domain.files.task_doc }}` → extract goal and task names
-5. read {% for issue in domain.issues %}`{{ issue.file }}`{% if not loop.last %}, {% endif %}{% endfor %} (if exist)
-6. write `{{ domain.files.commit_msg }}`
-7. write `{{ domain.files.summary }}` (include agent metrics tracked during execution)
+2. read all `{{ domain.files.context_summary }}` (from each task directory)
+3. read all `{{ domain.files.status }}` (from each task directory)
+4. read all `{{ domain.files.review }}` (from each task directory)
+5. read all `{{ domain.files.task_doc }}` → extract goal and task names
+6. read {% for issue in domain.issues %}`{{ issue.file }}`{% if not loop.last %}, {% endif %}{% endfor %} (if exist)
+7. write `{{ domain.files.commit_msg }}`
+8. write `{{ domain.files.summary }}` (include agent metrics tracked during execution)
 
 **NEVER:**
 - Skip any step of process flow
