@@ -1,0 +1,189 @@
+{#
+  PROMPT GUIDE: Acceptance Skill Generator Template
+
+  This template produces an LLM prompt that generates acceptance skills
+  for a specific domain. It is used by `metastate scaffold --domain <name>`.
+
+  The generated acceptance skill must address four mandatory questions:
+  1. What counts as correct output in this domain?
+  2. How do you verify it? (concrete methods)
+  3. What is NOT acceptable? (hard rules)
+  4. How does verification map to accept/reject status?
+
+  The acceptance skill is critical because the orchestrator uses it as the
+  final gate in the state machine. When the orchestrator reads the status
+  file and finds the accept label, the task advances. When it finds the
+  reject label, the task goes back for rework. The acceptance skill must
+  give agents enough guidance to make this determination correctly.
+
+  AFTER GENERATION:
+  Run the metastate scaffold self-check to verify the generated skill
+  addresses all four mandatory questions:
+  - Does it define what correct output looks like?
+  - Does it specify concrete verification methods?
+  - Does it list hard rules for what is NOT acceptable?
+  - Does it explain how verification maps to accept/reject labels?
+#}
+
+You are generating a metastate acceptance skill. You will produce a complete,
+production-ready acceptance skill markdown file that defines verification
+and acceptance criteria for the **{{ domain.name }}** domain.
+
+## Domain Context
+
+Domain: {{ domain.name }}
+Description: {{ domain.description }}
+
+### Acceptance Overview
+
+{{ domain.acceptance.summary }}
+
+### Accept/Reject Labels
+
+- Accept (task passes): **{{ domain.acceptance.accept_label }}**
+- Reject (task needs rework): **{{ domain.acceptance.reject_label }}**
+
+These labels are the same ones used in the domain's condition configuration
+and in agent output files. The orchestrator reads these labels from status
+files to make state transitions.
+
+### Issue Categories
+{%- for issue in domain.issues %}
+- {{ issue.name }} (prefix: {{ issue.prefix }}): {{ issue.description }} — file: {{ issue.file }}
+{%- endfor %}
+
+## Four Mandatory Questions
+
+Your acceptance skill MUST address all four of these questions completely
+and concretely. Do not leave any question partially answered.
+
+### Question 1: What counts as correct output?
+
+Define what "done" looks like in this domain. Be specific about:
+- What output files must exist and what they must contain
+- What quality standards the output must meet
+- What completeness criteria must be satisfied
+- What the status line must show ({{ domain.acceptance.accept_label }} vs
+  {{ domain.acceptance.reject_label }})
+
+Do not be vague. "Code works correctly" is not acceptable. "All tests pass,
+changes.md lists all modified files, and test-results.md shows
+{{ domain.acceptance.accept_label }} status" is acceptable.
+
+### Question 2: How do you verify? (concrete methods)
+
+Specify the exact verification steps an agent should follow. Include:
+- What commands to run (with exact arguments)
+- What files to read and what to check for in them
+- What tools to use (e.g., test frameworks, linters, validators)
+- What the expected output of each verification step looks like
+- Whether verification is automatic (machine-checkable), semi-automatic
+  (machine-assisted but needs human judgment), or manual (human-only)
+
+The verification mode for this domain is: **{{ domain.acceptance.verification }}**
+
+If automatic: specify exact commands and expected output.
+If semi-automatic: specify what machines check and what humans judge.
+If manual: specify the exact checklist a human should follow.
+
+### Question 3: What is NOT acceptable? (hard rules)
+
+List concrete, unambiguous rules. If any of these are violated, the output
+is {{ domain.acceptance.reject_label }} regardless of any other qualities.
+
+Hard rules should cover:
+- Missing required elements (files, sections, fields)
+- Quality violations that cannot be waived
+- Process violations (skipped steps, untested changes)
+- Common shortcuts that compromise output quality
+
+Each rule must be checkable — an agent should be able to determine
+definitively whether the rule is violated.
+
+### Question 4: How does verification map to accept/reject status?
+
+Explain the lifecycle of verification:
+1. An agent completes its work and writes output files
+2. The agent sets the status line to {{ domain.acceptance.accept_label }} or
+   {{ domain.acceptance.reject_label }}
+3. The orchestrator reads this status line to decide the next state
+
+Define clearly:
+- What conditions produce {{ domain.acceptance.accept_label }} — all
+  verification checks pass, all required output exists, no hard rule
+  violations
+- What conditions produce {{ domain.acceptance.reject_label }} — any
+  verification check fails, required output is missing, or a hard rule
+  is violated
+- What happens at the boundary — how to handle partial failures,
+  warnings, or edge cases
+- How this interacts with the issue lifecycle — Pending issues mean
+  {{ domain.acceptance.reject_label }}, Resolved/Don't Fix issues may still
+  be {{ domain.acceptance.accept_label }} if the agent addressed them
+
+## Skill Format
+
+The acceptance skill should be structured as a Claude Code skill with
+YAML frontmatter and Markdown body. Follow this structure:
+
+```markdown
+---
+name: acceptance
+description: Use when verifying task output meets acceptance criteria
+user-invocation: false
+---
+
+# Acceptance Criteria
+
+[Clear title reflecting the domain]
+
+[Opening section: brief summary of what this skill verifies]
+
+## Correct Output
+
+[Answer to Question 1: What counts as correct output]
+
+## Verification Methods
+
+[Answer to Question 2: How to verify, with concrete steps]
+
+## Hard Rules
+
+[Answer to Question 3: What is NOT acceptable]
+
+## Accept/Reject Decision
+
+[Answer to Question 4: How verification maps to accept/reject status]
+
+## Acceptable Status
+
+{{ domain.acceptance.accept_label }} — [brief description of what this means]
+
+## Unacceptable Status
+
+{{ domain.acceptance.reject_label }} — [brief description of what this means]
+```
+
+## Generation Instructions
+
+1. Read the domain context above carefully — the domain name, description,
+   acceptance summary, accept/reject labels, and verification mode.
+2. Address all four mandatory questions completely and concretely.
+3. Make every verification step specific enough that an agent could execute
+   it without interpretation. Avoid "check that it works" — instead write
+   "run [command] and verify the output contains [string]".
+4. Hard rules must be unambiguous. "Poor quality" is not a hard rule.
+   "Missing required section in output file" is a hard rule.
+5. The accept/reject decision section must make it crystal clear how the
+   status labels map to verification outcomes. There should be no room
+   for interpretation.
+6. Use the exact labels {{ domain.acceptance.accept_label }} and
+   {{ domain.acceptance.reject_label }} throughout — do not substitute
+   synonyms or abbreviations.
+7. Output ONLY the complete acceptance skill markdown file. No commentary,
+   no explanations, no meta-text. Start with the frontmatter `---` and end
+   after the last section.
+
+## Output
+
+Produce the complete acceptance.md file now.

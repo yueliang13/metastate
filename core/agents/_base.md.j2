@@ -1,0 +1,337 @@
+{#
+  PROMPT GUIDE: Agent Structure Template
+
+  This template defines the mandatory structure every metastate agent must follow.
+  It is NOT rendered directly into a plugin — it serves as a structural contract
+  and reference for agent authors and the scaffold generator.
+
+  WHY THIS EXISTS:
+  The metastate orchestrator is a state machine. It passes file paths to agents
+  and reads specific lines from their output files to make state transitions.
+  If agents deviate from this structure, the orchestrator cannot parse their
+  output and the state machine breaks.
+
+  HOW TO USE THIS:
+  - When writing a new agent prompt, ensure every section below is present.
+  - When scaffolding via `metastate scaffold`, the generator uses this template
+    as a structural checklist.
+  - The scaffold generator will verify all sections exist before writing output.
+
+  CONNECTING TO THE ORCHESTRATOR:
+  - The orchestrator reads agent output files via the "ORCHESTRATOR READS" marker.
+  - The orchestrator reads issue status files to decide state transitions.
+  - The orchestrator does NOT interpret natural language — it reads exact lines
+    from exact files. This is why Response Format and Output Files must be
+    machine-parseable.
+
+  COMMON MISTAKES:
+  1. Omitting the ORCHESTRATOR READS marker — the orchestrator will not know
+     which line contains the status value.
+  2. Adding conversational text outside the Response Format — the orchestrator
+     will try to parse it and fail.
+  3. Using different issue states than Pending/Resolved/Don't Fix — the
+     orchestrator only knows these three states.
+  4. Skipping Process Flow steps — agents that skip steps produce inconsistent
+     output that the orchestrator cannot handle.
+  5. Not writing to the exact file paths specified — the orchestrator reads
+     from predetermined paths and will find nothing.
+#}
+
+---
+name: {{ agent_name }}
+description: {{ agent_description }}
+{%- if model %}
+model: {{ model }}
+{%- endif %}
+{%- if skills %}
+skills:
+  {%- for skill in skills %}
+  - {{ skill }}
+  {%- endfor %}
+{%- endif %}
+---
+
+{#
+  PROMPT GUIDE: Frontmatter
+
+  The frontmatter defines metadata that the metastate build system uses
+  to wire the agent into the orchestrator and load required skills.
+
+  - name: The agent identifier. Must match the filename (without .md).
+    Used by orchestrator to dispatch to this agent.
+  - description: When to invoke this agent. Written as a "Use when..." clause.
+    The orchestrator and skill router use this to decide which agent to invoke.
+  - model: Optional. Override the default model for this agent (e.g., "opus"
+    for complex planning or reviewing tasks). Omit entirely if the default
+    model is sufficient.
+  - skills: List of skill names this agent should use during its Process Flow.
+    These are loaded automatically when the agent is invoked.
+#}
+
+# {{ agent_title }}
+
+{#
+  PROMPT GUIDE: Title and Role Description
+
+  Every agent begins with a clear title and 2-4 sentences describing who
+  the agent is and what it does. This section sets behavioral expectations
+  before the procedural sections begin.
+
+  The role description should:
+  - State the agent's job in plain language
+  - Clarify what assumptions the agent should make about its input
+  - Optionally include an "Announce at start" line (planner uses this)
+
+  IMPORTANT: This is the only section where conversational framing is
+  acceptable. Everything after this must be procedural and machine-parseable.
+#}
+
+{%- if announce_at_start %}
+
+**Announce at start:** "{{ announce_at_start }}"
+{%- endif %}
+
+## Iron Law
+
+{{ iron_law }}
+
+{#
+  PROMPT GUIDE: Iron Law
+
+  The Iron Law is a single inviolable sentence that defines the agent's
+  core behavioral constraint. Every decision the agent makes must pass
+  this law. If in doubt, the Iron Law wins.
+
+  Examples from the coding domain:
+  - Planner: "THE PLAN MUST BE EXECUTABLE BY SOMEONE WHO HAS NEVER READ THE SPEC."
+  - Implementer: "YOU MUST EXHAUST ALL OPTIONS BEFORE DON'T FIX."
+  - Spec Reviewer: "NEVER TRUST THE IMPLEMENTER'S CLAIMS. VERIFY EVERYTHING INDEPENDENTLY."
+  - Code Reviewer: "NEVER TRUST THE IMPLEMENTER'S CODE AT FACE VALUE. READ EVERY LINE."
+  - Plan Reviewer: "DO NOT TRUST THE PLANNER. VERIFY EVERY CLAIM AGAINST THE SPEC."
+
+  The Iron Law must be:
+  - One sentence
+  - Written in absolute terms (MUST, NEVER, ALWAYS)
+  - Something a reviewer could unambiguously check
+#}
+
+## Response Format
+
+Respond ONLY:
+```
+Output files:
+- {{ output_files }}
+```
+
+**NEVER add any extra content to the response**
+
+{#
+  PROMPT GUIDE: Response Format
+
+  The agent's response to the orchestrator is NOT natural language — it is
+  a machine-parseable list of file paths. The orchestrator reads this output
+  and then reads the listed files to make state transition decisions.
+
+  This is critical: the orchestrator does NOT interpret prose. It extracts
+  file paths from lines starting with "- " and reads those files.
+
+  The format is always:
+  ```
+  Output files:
+  - path/to/first/file
+  - path/to/second/file
+  ```
+
+  Agents MUST NOT add any text before or after this block. Any additional
+  content will confuse the orchestrator's parser.
+#}
+
+## Output Files
+
+{#
+  PROMPT GUIDE: Output Files
+
+  This section defines the exact format of each output file the agent
+  produces. Each file must include:
+
+  1. A file path (matching the Response Format list)
+  2. A complete template showing the structure
+  3. An ORCHESTRATOR READS marker on any line the orchestrator needs
+     to parse for state transitions
+
+  The ORCHESTRATOR READS marker tells the build system and the orchestrator
+  exactly which line to read. For example:
+
+  ```markdown
+  ## Status
+  EXPECTED | UNEXPECTED
+
+  # ORCHESTRATOR READS: line 4 only
+  ```
+
+  This means the orchestrator will read only line 4 of this file, parse it
+  for the status values defined in the domain yaml conditions section,
+  and make a state transition based on what it finds.
+
+  Output file templates should be complete enough that an agent can fill
+  them in mechanically. Include field names, status value options, and
+  any formatting rules.
+#}
+
+{%- for output_file in output_files %}
+
+### File: {{ output_file.path }}
+
+```markdown
+{{ output_file.template }}
+```
+
+{%- if output_file.orchestrator_reads %}
+
+# ORCHESTRATOR READS: {{ output_file.orchestrator_reads }}
+
+{%- endif %}
+{%- endfor %}
+
+## Process Flow
+
+{#
+  PROMPT GUIDE: Process Flow
+
+  The Process Flow is the agent's step-by-step algorithm. It must follow
+  the mandatory structure:
+
+  1. Read Context — Read all input files the agent needs
+  2. Do Work — Execute the agent's core responsibility
+  3. Handle Issues — Check for and resolve any pending issues
+  4. Write Reports — Produce output files in the exact format specified
+
+  This structure ensures:
+  - Agents always read before writing (no hallucinated context)
+  - Issue handling is integrated, not bolted on
+  - Output is always the last step (ensures completeness)
+
+  Steps should be numbered and concrete. Each step should specify:
+  - What file to read or write
+  - What action to take
+  - What decision to make and based on what evidence
+
+  Agents MUST follow every step. Skipping steps produces inconsistent
+  output that breaks the orchestrator's state machine.
+
+  The complexity of Process Flow varies by role type:
+  - Planner: ~5 steps (Read spec → Structure tasks → Write plan → Update for issues)
+  - Implementer: ~5 steps (Read context → Handle issues → Implement TDD → Self-review → Write reports)
+  - Reviewer: ~5 steps (Ensure output file → Read context → Review → Re-check resolved → Record issues)
+
+  Regardless of complexity, ALL agents must have the four mandatory phases.
+#}
+
+```
+Step 1: Read Context
+  read task input files: [agent-specific]
+  read issue files (if exist): [agent-specific]
+  {%- if read_existing_output %}
+
+Step 2: Read Existing Output
+  read output files (if exist): check for previously written content
+  {%- endif %}
+
+Step 3: Do Work
+  [agent-specific: the core responsibility of this agent]
+
+Step 4: Handle Issues
+  for each Pending issue (if any):
+    attempt to resolve during work
+    after verified: set Resolved silently
+    if genuinely blocked after exhausting approaches:
+      set Don't Fix, fill Decision Reason only
+  check ALL existing issues before appending:
+    - same issue recorded: skip
+    - new issue: append to appropriate section
+  for each Resolved in YOUR section:
+    re-verify: not actually fixed → set back to Pending
+
+Step 5: Write Reports
+  write output files per Output Files section format
+  respond per Response Format only
+```
+
+## Issue Handling
+
+{#
+  PROMPT GUIDE: Issue Handling
+
+  All agents in the metastate framework share a three-state issue lifecycle:
+
+  Pending → Resolved | Don't Fix
+
+  - Pending: A reviewer found a problem. The implementer/planner must address it.
+  - Resolved: The problem has been fixed. Set by the agent who originally
+    received the issue, after verifying the fix.
+  - Don't Fix: The problem cannot be resolved. Set only after genuinely
+    exhausting at least 3 distinct, actually-executed approaches.
+    Decision Reason MUST document what was tried and why it failed.
+
+  IMPORTANT RULES:
+  1. NEVER delete issues. They persist for the entire task lifecycle.
+  2. NEVER re-record an issue that already exists (same root cause).
+  3. Don't Fix requires at least 3 approaches with specific failure details.
+  4. Work-object issues (code bugs, task errors) must be fixed immediately,
+     not recorded as Don't Fix.
+  5. Only external blockers (spec ambiguity, environment constraints) can
+     be Don't Fix, and only after genuine exhaustion.
+
+  This section connects to the orchestrator: when the orchestrator reads
+  issue files and finds any Pending issues remaining, it routes back to
+  the implementer for rework. When all issues are Resolved or Don't Fix,
+  the task advances.
+#}
+
+### Issue States
+
+- **Pending** — Found, awaiting resolution (reviewer creates)
+- **Resolved** — Fixed (implementer/planner sets after verification)
+- **Don't Fix** — Cannot resolve (implementer/planner sets, with Decision Reason)
+
+### Don't Fix Requirements
+
+`Decision Reason` MUST document:
+1. At least 3 approaches attempted (must be actually executed, not speculated)
+2. Why each approach failed — specific errors/blockers
+3. What would resolve the issue — task change or environment fix
+
+### Issue Recording Rules
+
+- Same issue already recorded: NEVER append again
+- New issue (different root cause): APPEND to your section
+- NEVER delete any issue
+- Work-object issues (code bugs, task errors): fix immediately, do not record as Don't Fix
+- Only external blockers (spec, environment): record as Don't Fix after exhausting approaches
+
+## NEVER
+
+{#
+  PROMPT GUIDE: NEVER List
+
+  The NEVER list contains domain-specific prohibitions. These are things
+  that agents in this domain commonly get wrong or are tempted to do.
+  Each item should be specific and actionable.
+
+  Common NEVER items across all agents:
+  - Skip any step of process flow
+  - Add explanations/interpretations/summaries when responding — per Response Format only
+  - Trust claims without independent verification (reviewer agents)
+  - Delete or overwrite existing issue entries
+
+  Domain-specific NEVER items should address the most common failure modes
+  for that agent type in that domain. For example:
+  - Planner: Never write "see spec" instead of including the actual information
+  - Implementer: Never skip TDD steps, never mark tests as skip
+  - Reviewer: Never say "looks good" without checking, never be vague
+#}
+
+{%- for item in never_list %}
+
+- {{ item }}
+{%- endfor %}

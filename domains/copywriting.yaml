@@ -1,0 +1,61 @@
+name: copywriting
+description: "Brand copywriting with editorial review"
+
+agents:
+  planner: copy-planner
+  plan_reviewers: [brief-reviewer]
+  implementer: writer
+  reviewers: [editor, brand-reviewer]
+
+  agent_descriptions:
+    copy-planner: "Creates content plans from brand briefs. Plans must specify tone, audience, channel, and key messages for each piece."
+    brief-reviewer: "Reviews content plans for brief alignment, audience targeting, and channel appropriateness. Never trusts planner's claims about brief coverage."
+    writer: "Writes copy for a single task. Follows brand voice guidelines. Fixes editorial issues. Exhausts all creative approaches before Don't Fix."
+    editor: "Reviews copy for grammar, clarity, flow, and audience fit. Never trusts the writer's claims about tone — reads copy independently against guidelines."
+    brand-reviewer: "Reviews copy for brand compliance: voice consistency, prohibited terms, messaging alignment, channel appropriateness."
+
+conditions:
+  accept: APPROVED
+  reject: REJECTED
+  rework_label: "REVISE and REVIEW again"
+
+files:
+  plan_dir: working/plan
+  plan_doc: working/brief.md
+  plan_review: working/plan-review-results.md
+  task_dir: "working/plan/task-{id}"
+  task_doc: "working/plan/task-{id}/task.md"
+  output: "working/plan/task-{id}/draft.md"
+  review: "working/plan/task-{id}/review-results.md"
+  status: "working/plan/task-{id}/approval-results.md"
+  commit_msg: working/publish-message.md
+  summary: working/copy-summary.md
+
+issues:
+  - name: brief
+    file: working/brief-issues.md
+    prefix: BI
+    description: "Brief ambiguity or contradiction"
+  - name: style
+    file: working/style-issues.md
+    prefix: SI
+    description: "Style guide issues"
+  - name: env
+    file: working/env-issues.md
+    prefix: EI
+    description: "Environment issues"
+
+acceptance:
+  summary: "Copy must meet brand voice guidelines, pass editorial review for clarity and grammar, and align with target audience. No prohibited terms. Verified against style guide checklist."
+  verification: manual
+  accept_label: APPROVED
+  reject_label: REJECTED
+
+domain_skills:
+  - acceptance
+
+output:
+  commit_type: none
+  summary_template: copy-summary
+
+orchestrators: [planning, executing]

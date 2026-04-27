@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp /Users/yue/Code/Skill/superteam/agents/planner.md /Users/yue/Code/Skill/metastate/domains/coding/agents/)",
+      "Bash(cp /Users/yue/Code/Skill/superteam/agents/implementer.md /Users/yue/Code/Skill/metastate/domains/coding/agents/)",
+      "Bash(cp /Users/yue/Code/Skill/superteam/agents/spec-reviewer.md /Users/yue/Code/Skill/metastate/domains/coding/agents/)",
+      "Bash(cp /Users/yue/Code/Skill/superteam/agents/code-reviewer.md /Users/yue/Code/Skill/metastate/domains/coding/agents/)",
+      "Bash(cp /Users/yue/Code/Skill/superteam/agents/plan-reviewer.md /Users/yue/Code/Skill/metastate/domains/coding/agents/)",
+      "Bash(python3 *)",
+      "Bash(pip3 install *)",
+      "Bash(cp /Users/yue/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/test-driven-development/SKILL.md /Users/yue/Code/Skill/metastate/domains/coding/skills/test-driven-development/SKILL.md)",
+      "Bash(cp /Users/yue/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/test-driven-development/testing-anti-patterns.md /Users/yue/Code/Skill/metastate/domains/coding/skills/test-driven-development/testing-anti-patterns.md)"
+    ]
+  }
+}

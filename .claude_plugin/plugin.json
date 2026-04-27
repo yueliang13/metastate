@@ -1,0 +1,8 @@
+{
+  "name": "metastate",
+  "description": "Domain-agnostic state machine framework for AI-driven workflows",
+  "version": "0.1.0",
+  "author": {
+    "name": "FW Lei"
+  }
+}

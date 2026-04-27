@@ -1,0 +1,60 @@
+name: research
+description: "Research and analysis with fact-checking discipline"
+
+agents:
+  planner: research-planner
+  plan_reviewers: [methodology-reviewer]
+  implementer: researcher
+  reviewers: [methodology-reviewer, fact-checker]
+
+  agent_descriptions:
+    research-planner: "Creates research plans from briefs. Plans must be executable by someone with zero context on the topic. Bite-sized tasks with verification steps."
+    researcher: "Conducts research on a single task. Finds and verifies sources. Exhausts all search approaches before Don't Fix."
+    methodology-reviewer: "Reviews research methodology: proper source hierarchy, logical argumentation, reproducibility of findings."
+    fact-checker: "Verifies every factual claim by finding at least 2 independent primary sources. Never trusts researcher's summary, reads original sources directly."
+
+conditions:
+  accept: VERIFIED
+  reject: UNVERIFIED
+  rework_label: "RESEARCH and REVIEW again"
+
+files:
+  plan_dir: working/plan
+  plan_doc: working/brief.md
+  plan_review: working/plan-review-results.md
+  task_dir: "working/plan/task-{id}"
+  task_doc: "working/plan/task-{id}/task.md"
+  output: "working/plan/task-{id}/findings.md"
+  review: "working/plan/task-{id}/review-results.md"
+  status: "working/plan/task-{id}/verification-results.md"
+  commit_msg: working/report-message.md
+  summary: working/research-summary.md
+
+issues:
+  - name: brief
+    file: working/brief-issues.md
+    prefix: BI
+    description: "Research brief ambiguity or contradiction"
+  - name: methodology
+    file: working/methodology-issues.md
+    prefix: MI
+    description: "Methodology issues"
+  - name: env
+    file: working/env-issues.md
+    prefix: EI
+    description: "Environment issues"
+
+acceptance:
+  summary: "Research findings must be verified with at least 2 independent primary sources. Methodology must be reproducible. Claims must cite primary sources, not secondary summaries."
+  verification: semi-auto
+  accept_label: VERIFIED
+  reject_label: UNVERIFIED
+
+domain_skills:
+  - acceptance
+
+output:
+  commit_type: none
+  summary_template: research-summary
+
+orchestrators: [planning, executing]

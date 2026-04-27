@@ -1,0 +1,66 @@
+name: coding
+description: "Software development with TDD discipline"
+
+agents:
+  planner: planner
+  plan_reviewers: [plan-reviewer]
+  implementer: implementer
+  reviewers: [spec-reviewer, code-reviewer]
+
+  agent_descriptions:
+    planner: "Creates implementation plans from specs. Plans must be executable by someone with zero context. Bite-sized tasks with TDD steps."
+    implementer: "Implements a single task using TDD. Fixes review issues. Exhausts all options before Don't Fix."
+    spec-reviewer: "Verifies implementation matches task requirements. Never trusts claims, reads actual code independently."
+    code-reviewer: "Reviews code quality: separation of concerns, error handling, DRY, security, edge cases."
+
+conditions:
+  accept: EXPECTED
+  reject: UNEXPECTED
+  rework_label: "FIX and SPEC/CODE REVIEW again"
+
+files:
+  plan_dir: working/plan
+  plan_doc: working/spec.md
+  plan_review: working/plan-review-results.md
+  task_dir: "working/plan/task-{id}"
+  task_doc: "working/plan/task-{id}/task.md"
+  output: "working/plan/task-{id}/changes.md"
+  review: "working/plan/task-{id}/implement-review-results.md"
+  status: "working/plan/task-{id}/test-results.md"
+  commit_msg: working/commit-message.md
+  summary: working/task-summary.md
+
+issues:
+  - name: spec
+    file: working/spec-issues.md
+    prefix: SI
+    description: "Spec ambiguity or contradiction"
+  - name: plan
+    file: working/plan-issues.md
+    prefix: PI
+    description: "Plan issues"
+  - name: env
+    file: working/env-issues.md
+    prefix: EI
+    description: "Environment issues"
+
+acceptance:
+  summary: "Code must pass all tests (TDD). Black-box tests verify external behavior, unit tests verify internal logic. Use real tools (pytest, curl). No mocking when real tools exist."
+  verification: auto
+  accept_label: EXPECTED
+  reject_label: UNEXPECTED
+
+domain_skills:
+  - acceptance
+  - test-driven-development
+
+skill_mappings:
+  superteam:hands-off-issue-handling: coding:issue-handling
+  superteam:black-box-testing: coding:acceptance
+  superpowers:test-driven-development: coding:test-driven-development
+
+output:
+  commit_type: conventional
+  summary_template: task-summary
+
+orchestrators: [planning, executing]
