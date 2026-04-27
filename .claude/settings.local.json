@@ -9,7 +9,8 @@
       "Bash(python3 *)",
       "Bash(pip3 install *)",
       "Bash(cp /Users/yue/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/test-driven-development/SKILL.md /Users/yue/Code/Skill/metastate/domains/coding/skills/test-driven-development/SKILL.md)",
-      "Bash(cp /Users/yue/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/test-driven-development/testing-anti-patterns.md /Users/yue/Code/Skill/metastate/domains/coding/skills/test-driven-development/testing-anti-patterns.md)"
+      "Bash(cp /Users/yue/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/test-driven-development/testing-anti-patterns.md /Users/yue/Code/Skill/metastate/domains/coding/skills/test-driven-development/testing-anti-patterns.md)",
+      "Bash(git rm *)"
     ]
   }
 }
