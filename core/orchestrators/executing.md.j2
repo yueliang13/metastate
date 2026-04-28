@@ -118,7 +118,9 @@ digraph executing_flow {
   "dispatch {{ domain.agents.implementer }}" [shape=box]
   "read {{ domain.conditions.accept }} Status" [shape=box]
   "{{ domain.conditions.reject }}?" [shape=diamond]
+  "human review checkpoint" [shape=box]
   "read Complexity" [shape=box]
+  "has human issues?" [shape=diamond]
 {% for reviewer in domain.agents.reviewers %}
   "dispatch {{ reviewer }}" [shape=box]
 {% endfor %}
@@ -132,7 +134,10 @@ digraph executing_flow {
   "dispatch {{ domain.agents.implementer }}" -> "read {{ domain.conditions.accept }} Status" [label="read status from {{ domain.files.status }} (line 4 only)"]
   "read {{ domain.conditions.accept }} Status" -> "{{ domain.conditions.reject }}?"
   "{{ domain.conditions.reject }}?" -> "dispatch {{ domain.agents.implementer }}" [label="yes: {{ domain.conditions.rework_label }}"]
-  "{{ domain.conditions.reject }}?" -> "read Complexity" [label="no: {{ domain.conditions.accept }}"]
+  "{{ domain.conditions.reject }}?" -> "human review checkpoint" [label="no: {{ domain.conditions.accept }}"]
+  "human review checkpoint" -> "has human issues?"
+  "has human issues?" -> "dispatch {{ domain.agents.implementer }}" [label="yes: human issues added to {{ domain.files.review }}"]
+  "has human issues?" -> "read Complexity" [label="no: proceed"]
   "read Complexity" -> "dispatch {{ domain.agents.reviewers[0] }}" [label="full"]
   "read Complexity" -> "dispatch {{ domain.agents.reviewers[0] }}" [label="standard"]
   "read Complexity" -> "next task" [label="minimal: skip review"]
@@ -146,6 +151,31 @@ digraph executing_flow {
   "next task" -> "dispatch {{ domain.agents.implementer }}" [label="Task {% raw %}{{id}}{% endraw %} → Task {% raw %}{{id}}{% endraw %}+1"]
 }
 ```
+
+### Human Review Checkpoint
+
+After implementer completes and status is `{{ domain.conditions.accept }}`, STOP and wait for human review.
+
+Present to human:
+- `{{ domain.files.output }}` — what was changed
+- `{{ domain.files.status }}` — test results
+
+Human can:
+1. **Approve** — say "proceed" or "continue". Orchestrator reads Complexity and dispatches reviewers.
+2. **Request changes** — write issues to `{{ domain.files.review }}` in the same format as reviewer issues:
+
+```markdown
+## Human Review Issues
+
+### HR-001: [descriptive name]
+- Status: Pending
+- Description: [what you want changed and why]
+- Decision Reason: [leave empty — implementer fills for Don't Fix]
+```
+
+After human writes issues, orchestrator dispatches `{{ domain.agents.implementer }}` to fix them. Implementer reads `{{ domain.files.review }}` and handles human issues the same way as reviewer issues.
+
+Issue ID prefix: `HR-` (HR-001, HR-002, ...)
 
 ### Complexity-Based Review Dispatch
 

@@ -118,7 +118,9 @@ digraph executing_flow {
   "dispatch implementer" [shape=box]
   "read EXPECTED Status" [shape=box]
   "UNEXPECTED?" [shape=diamond]
+  "human review checkpoint" [shape=box]
   "read Complexity" [shape=box]
+  "has human issues?" [shape=diamond]
 
   "dispatch spec-reviewer" [shape=box]
 
@@ -134,7 +136,10 @@ digraph executing_flow {
   "dispatch implementer" -> "read EXPECTED Status" [label="read status from working/plan/task-{id}/test-results.md (line 4 only)"]
   "read EXPECTED Status" -> "UNEXPECTED?"
   "UNEXPECTED?" -> "dispatch implementer" [label="yes: FIX and SPEC/CODE REVIEW again"]
-  "UNEXPECTED?" -> "read Complexity" [label="no: EXPECTED"]
+  "UNEXPECTED?" -> "human review checkpoint" [label="no: EXPECTED"]
+  "human review checkpoint" -> "has human issues?"
+  "has human issues?" -> "dispatch implementer" [label="yes: human issues added to working/plan/task-{id}/implement-review-results.md"]
+  "has human issues?" -> "read Complexity" [label="no: proceed"]
   "read Complexity" -> "dispatch spec-reviewer" [label="full"]
   "read Complexity" -> "dispatch spec-reviewer" [label="standard"]
   "read Complexity" -> "next task" [label="minimal: skip review"]
@@ -148,6 +153,31 @@ digraph executing_flow {
   "next task" -> "dispatch implementer" [label="Task {{id}} → Task {{id}}+1"]
 }
 ```
+
+### Human Review Checkpoint
+
+After implementer completes and status is `EXPECTED`, STOP and wait for human review.
+
+Present to human:
+- `working/plan/task-{id}/changes.md` — what was changed
+- `working/plan/task-{id}/test-results.md` — test results
+
+Human can:
+1. **Approve** — say "proceed" or "continue". Orchestrator reads Complexity and dispatches reviewers.
+2. **Request changes** — write issues to `working/plan/task-{id}/implement-review-results.md` in the same format as reviewer issues:
+
+```markdown
+## Human Review Issues
+
+### HR-001: [descriptive name]
+- Status: Pending
+- Description: [what you want changed and why]
+- Decision Reason: [leave empty — implementer fills for Don't Fix]
+```
+
+After human writes issues, orchestrator dispatches `implementer` to fix them. Implementer reads `working/plan/task-{id}/implement-review-results.md` and handles human issues the same way as reviewer issues.
+
+Issue ID prefix: `HR-` (HR-001, HR-002, ...)
 
 ### Complexity-Based Review Dispatch
 
